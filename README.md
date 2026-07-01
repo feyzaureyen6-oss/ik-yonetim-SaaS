@@ -5,7 +5,7 @@ Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduct
 ## Setup
 
 Make sure to install dependencies:
-![Ekran Görüntüsü](Ekran görüntüsü 2026-07-01 230741.png)
+![Ekran Görüntüsü]([Ekran görüntüsü 2026-07-01 230741.png](https://github.com/feyzaureyen6-oss/ik-yonetim-SaaS/blob/main/Ekran%20g%C3%B6r%C3%BCnt%C3%BCs%C3%BC%202026-07-01%20230741.png))
 
 
 ```bash
