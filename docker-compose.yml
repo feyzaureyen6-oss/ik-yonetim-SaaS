@@ -1,0 +1,15 @@
+services:
+  postgres_db:
+    image: postgres:15-alpine
+    container_name: hr_SaaS_postgres
+    environment:
+      POSTGRES_USER: feyza_SaaS_admin
+      POSTGRES_PASSWORD: HR_Super_Secret_123
+      POSTGRES_DB: hr_SaaS_database
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

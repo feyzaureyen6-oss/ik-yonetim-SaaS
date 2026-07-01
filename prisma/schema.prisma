@@ -1,0 +1,144 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+/// 🏢 ŞİRKET DEPARTMANLARI
+/// Şirket içi organizasyonel yapıyı ve personellerin hangi birimde çalıştığını tutar.
+model Department {
+  id        String     @id @default(uuid())
+  name      String     @unique // Departman adı (Örn: "Yazılım Geliştirme", "İnsan Kaynakları")
+  employees Employee[] // Bu departmanda çalışan personellerin listesi (Bire-Çok İlişki)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+/// 🌟 SOSYAL YARDIMLAR VE YAN HAKLAR
+/// Personellere maaş haricinde verilen ek ayni veya nakdi hakları saklar.
+model Allowance {
+  id          String   @id @default(uuid())
+  employeeId  String   // Yardımın hangi personele tanımlandığı
+  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  name        String   // Yardım Adı (Örn: "Yol Yardımı", "Yemek Nakdi", "Yakacak Yardımı")
+  amount      Decimal  @db.Decimal(19, 4)   // Yardımın TL cinsinden tutarı
+  periodType  String   // Periyot Türü: "RECURRING" (Her ay düzenli ödenen) veya "ONEOFF" (Tek seferlik/Dönemsel)
+  isTaxable   Boolean  @default(true) // Muafiyet kontrolü: Bu yardım Vergiye/SGK'ya tabi mi, yoksa vergiden muaf mı?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+/// 👤 PERSONEL KARTLARI
+/// Şirkette çalışan tüm personellerin özlük, iletişim ve çalışma durumu bilgilerini tutar.
+model Employee {
+  id              String      @id @default(uuid())
+  firstName       String
+  lastName        String
+  email           String      @unique
+  phone           String?
+  title           String      @default("Uzman") // Çalışanın Unvanı (Örn: "Kıdemli SRE Mühendisi")
+  iban            String?                       // Maaşın yatırılacağı resmi banka hesap numarası
+  employmentType  String      @default("FULL_TIME") // İstihdam Türü: FULL_TIME, CONTRACT, PART_TIME, INTERN
+  hireDate        DateTime    @default(now())       // İşe Giriş Tarihi (Kıdem tazminatı ve yıllık izin hesaplarında kritik)
+  terminationDate DateTime?                        // İşten Çıkış Tarihi (Aktif çalışanlarda NULL olur)
+  status          String      @default("ACTIVE")    // Çalışma Durumu: "ACTIVE" (Aktif), "PASSIVE" (İşten Ayrılmış)
+  
+  // Departman İlişkisi
+  departmentId    String
+  department      Department  @relation(fields: [departmentId], references: [id], onDelete: Restrict) // Personeli olan departman silinemez
+  
+  // Bordro ve Sosyal Yardım İlişkileri
+  allowances      Allowance[] // Personelin birden fazla sosyal yardımı olabilir
+  payrolls        Payroll[]   // Personelin geçmişe dönük birçok aylık bordro kaydı bulunur
+  
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+/// ⚙️ YASAL PARAMETRELER VE VERGİ ORANLARI (TARİF DEFTERİ)
+/// Devletin her yıl resmi olarak değiştirdiği vergi dilimlerini ve SGK oranlarını tutar.
+/// Bu sayede oranlar değiştiğinde kod yazmaya gerek kalmaz, sadece buraya yeni yılın satırı eklenir.
+model PayrollParameter {
+  id                     String   @id @default(uuid())
+  year                   Int      @unique // Hangi yıla ait parametre olduğu (Örn: 2025, 2026, 2027)
+  sgkWorkerRate          Float    @default(14.0) // SGK İşçi Payı Oranı (Türkiye standartı %14)
+  unemploymentWorkerRate Float    @default(1.0)  // İşsizlik Sigortası İşçi Payı Oranı (Türkiye standartı %1)
+  sgkEmployerRate        Float    @default(15.5) // SGK İşveren Payı Oranı (%20.5'tir ancak 5 puanlık teşvikle %15.5 uygulanır)
+  unemploymentEmployerRate Float  @default(2.0)  // İşsizlik Sigortası İşveren Payı Oranı (Türkiye standartı %2)
+  stampTaxRate           Float    @default(0.00759) // Damga Vergisi Oranı (Maaşlar için binde 7.59 yani 0.00759)
+
+  // Gelir Vergisi Dilimleri Limitleri (Türkiye'de kümülatif matrah arttıkça vergi oranı artar)
+  taxBracket1Limit       Decimal  @db.Decimal(19, 4)   
+  taxBracket1Rate        Float    @default(15.0) // 1. Dilim Üst Sınırı -> Bu tutara kadar olan kazançlar %15 ile vergilendirilir
+  taxBracket2Limit       Decimal  @db.Decimal(19, 4)    
+  taxBracket2Rate        Float    @default(20.0) // 2. Dilim Üst Sınırı -> Bu tutara kadar olan kazançlar %20 ile vergilendirilir
+  taxBracket3Limit       Decimal  @db.Decimal(19, 4)    
+  taxBracket3Rate        Float    @default(27.0) // 3. Dilim Üst Sınırı -> Bu tutara kadar olan kazançlar %27 ile vergilendirilir
+  taxBracket4Limit       Decimal  @db.Decimal(19, 4)  
+  taxBracket4Rate        Float    @default(35.0) // 4. Dilim Üst Sınırı -> Bu tutara kadar olan kazançlar %35 ile vergilendirilir
+  taxBracket5Rate        Float    @default(40.0) // Son dilim sınırsızdır, bu limitin üzeri doğrudan %40 ile vergilendirilir
+
+  minimumWageGross      Decimal  @db.Decimal(19, 4)    // O yılın resmi Brüt Asgari Ücreti (Asgari ücret kadar olan gelirin vergiden muaf tutulması için şart)
+  
+  payrolls               Payroll[] // Bu parametre seti kullanılarak hesaplanmış bordrolar
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+}
+
+/// 📋 AYLIK BORDRO VE MAAŞ İŞLEMLERİ (PİŞEN YEMEK / SONUÇLAR)
+/// Personellerin her ay kuruşu kuruşuna hesaplanan resmi hak edişlerini ve maliyetlerini saklar.
+model Payroll {
+  id                 String   @id @default(uuid())
+  month              Int      // Bordro Ayı (1 = Ocak, 12 = Aralık)
+  year               Int      // Bordro Yılı (Örn: 2026)
+  baseSalary         Decimal  @db.Decimal(19, 4)   // Sözleşmedeki Net Ana Maaş (Formdan girilen ham taban değer)
+  workedDays         Int      @default(30) // Personelin o ay kaç gün çalıştığı (Eksik gün/rapor durumunda maaş kesintisi için)
+
+  // Değişken Gelir Kalemleri
+  overtimeHours      Decimal  @db.Decimal(19, 4)   // Personelin yaptığı toplam fazla mesai saati
+  overtimeHourlyRate Decimal  @db.Decimal(19, 4) // Saat başına ödenecek mesai ücreti
+  bonus              Decimal  @db.Decimal(19, 4) // Prim, ödül veya o aya özel ek performans ödemeleri
+  allowancesTotal    Decimal  @db.Decimal(19, 4) // Personelin Allowance tablosundaki o aya isabet eden sosyal yardımlarının toplamı
+
+  // İdari Borç ve Kesinti Yönetimi (Birbirinden tamamen ayrıldı)
+  advances           Decimal  @db.Decimal(19, 4)// Ay içinde personele nakit elden/bankadan verilen erken "Avans" ödemesi
+  deductions         Decimal  @db.Decimal(19, 4) // Şirket içi idari veya yasal "Özel Kesintiler" (Örn: İcra, Trafik Cezası, Eksik Ekipman)
+  
+  // Ödeme Detayları
+  netSalary         Decimal  @db.Decimal(19, 4)   // Tüm hesaplamalardan sonra personelin banka hesabına fiilen yatacak Net Tutar
+  isPaid             Boolean  @default(false) // Maaşın personele transfer edilip edilmediği (Ödeme / Onay durumu)
+  
+  
+  paymentDate     DateTime? // Ödeme yapıldığı an burası doldurulur
+  // ⚖️ Hesaplanan Yasal Kalemler (Yukarıdaki parametrelere göre backend motorunun ürettiği resmi tutarlar)
+  grossSalary        Decimal  @db.Decimal(19, 4) // Personelin ham Brüt Maaşı (Vergiler kesilmeden önceki tepe nokta)
+  sgkWorkerPay       Decimal  @db.Decimal(19, 4) // Personelin brütünden kesilen %14 SGK İşçi Payı tutarı
+  unemploymentWorker Decimal  @db.Decimal(19, 4) // Personelin brütünden kesilen %1 İşsizlik İşçi Payı tutarı
+  incomeTaxBase      Decimal    @db.Decimal(19, 4)// (Gelir Vergisi Matrahı)
+  incomeTax          Decimal  @db.Decimal(19, 4)  //(Gelir Vergisi Tutarı)
+  stampTax           Decimal  @db.Decimal(19, 4) // Personelin brütünden kesilen Damga Vergisi tutarı
+  sgkEmployerPay     Decimal  @db.Decimal(19, 4) // Şirketin bu personel için devlete ödeyeceği %15.5 SGK İşveren Payı
+  unemploymentEmployer Decimal  @db.Decimal(19, 4)// Şirketin bu personel için devlete ödeyeceği %2 İşsizlik İşveren Payı
+  totalEmployerCost   Decimal  @db.Decimal(19, 4)// Personelin Şirkete Toplam Gerçek Maliyeti (Gross + İşveren Payları)
+  
+  // Yasal Hesaplama Alanları (Her bordro kendi fotoğrafını tutmalı)
+  
+  monthlyTaxBase    Decimal  @db.Decimal(19, 4) // Bu ayın matrahı
+  cumulativeTaxBase Decimal  @db.Decimal(19, 4) // Yılbaşından bugüne biriken matrah
+  taxExemption      Decimal?  @db.Decimal(19, 4)// Asgari ücret vergi istisnası
+  // Personel İlişkisi
+  employeeId          String
+  employee            Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade) // Personel silinirse bordrosu da silinir
+  
+  // 🔗 Parametre İlişkisi (Bu bordronun hangi yılın yasal oran kurallarıyla hesaplandığını kilitler)
+  parameterId         String
+  parameter           PayrollParameter @relation(fields: [parameterId], references: [id], onDelete: Restrict) // Kullanılan oran seti silinemez
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@unique([employeeId, month, year]) // Bir personele aynı ay ve aynı yıl içinde sadece 1 tane bordro hesaplanabilir!
+}

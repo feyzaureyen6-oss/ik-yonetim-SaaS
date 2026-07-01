@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Payroll" ADD COLUMN     "overtimeHourlyRate" DOUBLE PRECISION NOT NULL DEFAULT 0.0,
+ADD COLUMN     "overtimeHours" DOUBLE PRECISION NOT NULL DEFAULT 0.0;
