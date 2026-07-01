@@ -1,9 +1,12 @@
 
 [![Ekran Görüntüsü](https://github.com/feyzaureyen6-oss/ik-yonetim-SaaS/blob/main/Ekran%20g%C3%B6r%C3%BCnt%C3%BCs%C3%BC%202026-07-01%20230741.png?raw=true)](https://github.com/feyzaureyen6-oss/ik-yonetim-SaaS/commit/d4c444dbf73ba9e39a9936c1805d1008fe0a0cfd)
+
+
 İK Yönetim ve Bordro SaaS Sistemi
+
 Bu sistem, şirketlerin personel özlük haklarından finansal analizlerine kadar tüm süreci dijitalleştiren, uçtan uca bir yönetim platformudur. Platform; departman kurulumundan, bordro hesaplamalarına ve geçmiş ödeme arşivlemeye kadar tüm operasyonları tek bir panel üzerinden yönetilmesini sağlar.
 
-🏗 Sistem Modülleri ve İşleyiş
+Sistem Modülleri ve İşleyiş
 1. Departmanlar Sayfası
 Şirketin hiyerarşik yapısının temelidir.
 
@@ -63,4 +66,16 @@ Backend: Node.js, TypeScript.
 Veritabanı: Prisma ORM.
 
 Dosya İşlemleri: PDF (Maaş pusulası) ve Excel (Raporlama) dışa aktarım desteği.
+
+# Projeyi klonlayın
+git clone https://github.com/feyzaureyen6-oss/ik-yonetim-SaaS.git
+
+# Bağımlılıkları yükleyin
+npm install
+
+# Veritabanını hazırlayın
+npx prisma db push
+
+# Projeyi başlatın
+npm run dev
 Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
