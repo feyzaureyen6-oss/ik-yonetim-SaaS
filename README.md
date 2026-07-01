@@ -54,11 +54,12 @@ Veritabanı: Prisma ORM.
 
 Dosya İşlemleri: PDF (Maaş pusulası) ve Excel (Raporlama) dışa aktarım desteği.
 
+```bash
 # Projeyi klonlayın
 git clone https://github.com/feyzaureyen6-oss/ik-yonetim-SaaS.git
 
 # Bağımlılıkları yükleyin
-'npm install'
+npm install
 
 # Veritabanını hazırlayın
 npx prisma db push
