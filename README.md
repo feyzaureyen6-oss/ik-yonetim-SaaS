@@ -1,5 +1,5 @@
 # İK Yönetim ve Bordro SaaS Sistemi
-
+images/Ekran görüntüsü 2026-07-01 231152.png
 Bu sistem, şirketlerin personel özlük haklarından finansal analizlerine kadar tüm süreci dijitalleştiren, uçtan uca bir yönetim platformudur. Platform; departman kurulumundan, bordro hesaplamalarına ve geçmiş ödeme arşivlemeye kadar tüm operasyonları tek bir panel üzerinden yönetilmesini sağlar.
 
 
