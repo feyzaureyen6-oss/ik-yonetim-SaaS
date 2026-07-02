@@ -1,5 +1,5 @@
 # İK Yönetim ve Bordro SaaS Sistemi
-
+https://www.google.com/search?q=https://github.com/feyzaureyen6-oss/ik-yonetim-SaaS/tree/main/images
 Bu sistem, şirketlerin personel özlük haklarından finansal analizlerine kadar tüm süreci dijitalleştiren, uçtan uca bir yönetim platformudur. Platform; departman kurulumundan, bordro hesaplamalarına ve geçmiş ödeme arşivlemeye kadar tüm operasyonları tek bir panel üzerinden yönetilmesini sağlar.
 
 
